@@ -4,7 +4,7 @@ import shutil
 from pathlib import Path
 import html2text
 
-def html_to_md(html_path, md_path, base_dir, images_dir):
+def html_to_md(html_path, md_path, base_dir, md_dir, images_dir):
     with open(html_path, 'r', encoding='utf-8', errors='ignore') as f:
         html_content = f.read()
 
@@ -28,17 +28,21 @@ def html_to_md(html_path, md_path, base_dir, images_dir):
             dest_img.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(img_path, dest_img)
             
-            md_dir = md_path.parent
-            rel_to_md = os.path.relpath(dest_img, md_dir)
+            md_dir_for_rel = md_path.parent
+            rel_to_md = os.path.relpath(dest_img, md_dir_for_rel)
             html_content = html_content.replace(img_src, rel_to_md.replace('\\', '/'))
 
     chm_link_pattern = re.compile(r'href=["\'](chm://|ms-its:[^"\']+)["\']', re.IGNORECASE)
     for match in chm_link_pattern.finditer(html_content):
         full_link = match.group(1)
         
+        target_chm_name = None
+        
         if full_link.startswith('ms-its:'):
             msits_match = re.match(r'ms-its:([^:]+\.chm)::(/.*)', full_link, re.IGNORECASE)
             if msits_match:
+                chm_file = msits_match.group(1)
+                target_chm_name = Path(chm_file).stem
                 chm_link = msits_match.group(2)
             else:
                 continue
@@ -51,15 +55,25 @@ def html_to_md(html_path, md_path, base_dir, images_dir):
             anchor_part = ''
         
         chm_link = chm_link.split('#')[0]
+        chm_link = chm_link.lstrip('/')
         chm_link = chm_link.replace('\\', '/')
         
         if '.htm' in chm_link.lower():
             md_file = re.sub(r'\.html?$', '.md', chm_link, flags=re.IGNORECASE)
-            new_link = f'[{md_file}]({md_file}{anchor_part})'
+            
+            if target_chm_name:
+                current_chm = Path(html_path).parent.relative_to(base_dir).parts[0]
+                target_path = md_dir / target_chm_name / md_file
+                current_path = md_path.parent
+                rel_path = os.path.relpath(target_path, current_path).replace(os.sep, '/')
+                new_href = f'{rel_path}{anchor_part}'
+            else:
+                new_href = f'{md_file}{anchor_part}'
         else:
-            new_link = f'[{chm_link}]({chm_link}{anchor_part})'
+            new_href = f'{chm_link}{anchor_part}'
         
-        html_content = html_content.replace(match.group(0), new_link)
+        old_href = match.group(1)
+        html_content = html_content.replace(old_href, new_href)
 
     a_pattern = re.compile(r'<a[^>]+href=["\']([^"\']+)["\']', re.IGNORECASE)
     for match in a_pattern.finditer(html_content):
@@ -129,7 +143,7 @@ def convert_folder(base_folder):
             rel_path = html_file.relative_to(html_dir)
             md_file = md_dir / rel_path.with_suffix('.md')
             
-            html_to_md(html_file, md_file, html_dir, images_dir)
+            html_to_md(html_file, md_file, html_dir, md_dir, images_dir)
             print(f"  Converted: {rel_path}")
         
         for html_file in chm_folder.rglob('*.htm'):
@@ -138,5 +152,5 @@ def convert_folder(base_folder):
             rel_path = html_file.relative_to(html_dir)
             md_file = md_dir / rel_path.with_suffix('.md')
             
-            html_to_md(html_file, md_file, html_dir, images_dir)
+            html_to_md(html_file, md_file, html_dir, md_dir, images_dir)
             print(f"  Converted: {rel_path}")
