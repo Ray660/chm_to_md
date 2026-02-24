@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 import threading
+import sys
+import os
 from ui import select_folder
 from extract import extract_all
 
@@ -12,6 +14,13 @@ class ProgressWindow:
         self.selected_folder = select_folder()
         if not self.selected_folder:
             messagebox.showinfo("取消", "已取消操作")
+            self.root.destroy()
+            return
+        
+        # Check if folder has CHM files
+        chm_files = [f for f in os.listdir(self.selected_folder) if f.lower().endswith('.chm')]
+        if not chm_files:
+            messagebox.showinfo("提示", "所选文件夹中没有找到CHM文件")
             self.root.destroy()
             return
         
@@ -65,6 +74,8 @@ class ProgressWindow:
             
             self.root.after(100, self.show_complete)
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             self.root.after(100, lambda: self.show_error(str(e)))
     
     def show_complete(self):
