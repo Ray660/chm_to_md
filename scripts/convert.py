@@ -123,7 +123,7 @@ def html_to_md(html_path, md_path, base_dir, md_dir, images_dir):
     with open(md_path, 'w', encoding='utf-8') as f:
         f.write(md_content)
 
-def convert_folder(base_folder):
+def convert_folder(base_folder, progress_callback=None):
     base_path = Path(base_folder)
     html_dir = base_path / 'html'
     md_dir = base_path / 'md'
@@ -132,6 +132,20 @@ def convert_folder(base_folder):
     if not html_dir.exists():
         print(f"html dir not found: {html_dir}")
         return
+    
+    # Count total files first
+    html_files = []
+    for chm_folder in html_dir.iterdir():
+        if not chm_folder.is_dir():
+            continue
+        for f in chm_folder.rglob('*.html'):
+            html_files.append(f)
+        for f in chm_folder.rglob('*.htm'):
+            if f.suffix != '.html':
+                html_files.append(f)
+    
+    total = len(html_files)
+    current = 0
     
     for chm_folder in html_dir.iterdir():
         if not chm_folder.is_dir():
@@ -145,6 +159,10 @@ def convert_folder(base_folder):
             
             html_to_md(html_file, md_file, html_dir, md_dir, images_dir)
             print(f"  Converted: {rel_path}")
+            
+            current += 1
+            if progress_callback:
+                progress_callback(current, total, f"正在转换: {rel_path}")
         
         for html_file in chm_folder.rglob('*.htm'):
             if html_file.suffix == '.html':
@@ -154,3 +172,7 @@ def convert_folder(base_folder):
             
             html_to_md(html_file, md_file, html_dir, md_dir, images_dir)
             print(f"  Converted: {rel_path}")
+            
+            current += 1
+            if progress_callback:
+                progress_callback(current, total, f"正在转换: {rel_path}")

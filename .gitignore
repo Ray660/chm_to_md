@@ -3,3 +3,6 @@ __pycache__/
 J750_HELP/
 test_source/
 dist/
+build/
+dist/
+*.spec
