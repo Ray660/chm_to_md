@@ -2,7 +2,8 @@ __pycache__/
 *.pyc
 J750_HELP/
 test_source/
+test/
 dist/
 build/
-dist/
 *.spec
+chm_to_md.zip

@@ -148,6 +148,38 @@ A: 确保目标 MD 文件中包含对应的锚点标签（`<a id="xxx"></a>`）�
 - [html2text](https://github.com/aaronsw/html2text) - HTML 转 Markdown
 - 7-Zip - CHM 解压
 
+## 打包为 exe（可选）
+
+如果你想把程序打包成 exe 文件（无需 Python 即可运行）：
+
+### 环境要求
+
+1. 安装 PyInstaller：
+```bash
+pip install pyinstaller
+```
+
+2. 确保 7-Zip 已安装在默认位置：
+- `C:\Program Files\7-Zip\7z.exe`
+
+### 打包命令
+
+```bash
+# 进入项目目录
+cd chm_to_md
+
+# 打包
+pyinstaller chm_to_md.spec --clean
+```
+
+打包完成后，exe 文件位于 `dist/chm_to_md.exe`
+
+### 注意事项
+
+- 打包后的 exe 约 10MB
+- 无需目标机器安装 Python 或 7-Zip
+- 首次运行可能需要几秒钟初始化
+
 ## 许可证
 
 MIT License
